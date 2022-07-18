@@ -17,6 +17,7 @@ import time
 from flask import Flask, render_template, request, jsonify, \
     send_from_directory, redirect, url_for, make_response, Response
 from flask_pymongo import PyMongo
+from urllib.parse import urlparse, urlunparse
 from bson.objectid import ObjectId
 
 app = Flask(__name__)
@@ -54,6 +55,18 @@ def load_i18n(request):
     if header_lang in lang_keys:
         return languages[header_lang]
     return languages["en"]
+
+
+@app.before_request
+def redirect_to_new_domain():
+    urlparts = urlparse(request.url)
+    if urlparts.netloc != "www.aperisolve.com":
+        urlparts_list = list(urlparts)
+        urlparts_list[1] = "www.aperisolve.com"
+        response = make_response(redirect(urlunparse(urlparts_list), code=301))
+        if urlparts.netloc.endswith("aperisolve.fr"):
+            response.set_cookie('lang', "fr")
+        return response
 
 
 def mencoder(o):
